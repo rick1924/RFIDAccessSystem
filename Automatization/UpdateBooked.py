@@ -1,4 +1,5 @@
-# Edited by Ricardo Rivera on May 1st, 2019
+# Created by Ricardo Rivera
+# Last Edit: Ricardo Rivera, July 21st 2019
 
 # The code checks if the user table in the SQL database had any manual modifications. This is whether a field was updated or a user was
 # deleted from the table. For the code to work we had to add two triggers on the SQL database; see the documentation file of this script for
@@ -23,38 +24,34 @@ def authenticateBookedAdmin():
     user_id = authenticate_response_json["userId"]
     return ({"X-Booked-SessionToken": session_token, "X-Booked-UserId": user_id})
 
-headers = authenticateBookedAdmin()
+auth_headers = authenticateBookedAdmin()
 
 
-# In the following block of code we find which fields have been manually changed in the database table, and update those fields in Booked.
-# If a field in the table has been modified, MySQL creates a flag which sets the field "Modified" to 1. The script finds the users that have
-# this flag, and updates Booked with the new information.
+# In the following block of code we find which fields have been manually changed in the database table, and update those fields in "Booked".
+# If a field in the table has been modified, MySQL creates a flag which sets the field "Modified" to 1. The scripts finds the users that have
+# this flag, and updates the corresponding users in "Booked".
 engine = create_engine("mysql+pymysql://SQL_USERNAME:SQL_PASSWORD@MYSQL_SERVER_IP_ADDRESS/RFIDTagSystem")
 
-modified_rows = engine.execute("SELECT id, GivenName, Surname, Email, UID, BookedID, BookedUsername FROM YOUR_USER_TABLE_NAME WHERE Modified = 1").fetchall()
-modified_table = pd.DataFrame(modified_rows, columns=["id","GivenName","Surname","Email","UID", "BookedID", "BookedUsername"])
+modified_rows = engine.execute("SELECT mechStudents.id, mechStudents.GivenName, mechStudents.Surname, mechStudents.Email, mechStudents.UID, mechStudents.BookedID, mechStudents.BookedUsername, permissionStudents.GroupId FROM mechStudents INNER JOIN permissionStudents ON mechStudents.id = permissionStudents.id WHERE mechStudents.Modified = 1").fetchall()
+modified_table = pd.DataFrame(modified_rows, columns=["id","GivenName","Surname","Email","UID", "BookedID", "BookedUsername", "GroupId"])
 
 for i in modified_table.index:
     row = modified_table.iloc[i]
 
     #If the user has just been created and has no UID assigned yet, for the code not to crash, it writes the value "0" in this field
-    if (row["UID"] == None):
-        update_info = {"firstName": row["GivenName"], "lastName": row["Surname"], "emailAddress": row["Email"], "userName": row["BookedUsername"],
-    "timezone": "America/Vancouver", "customAttributes": [{"attributeId": "10", "attributeValue": 0}]}
-    else:
-        update_info = {"firstName": row["GivenName"], "lastName": row["Surname"], "emailAddress": row["Email"], "userName": row["BookedUsername"],
-    "timezone": "America/Vancouver", "customAttributes": [{"attributeId": "10", "attributeValue": int(row["UID"])}]}
+    update_info = {"firstName": row["GivenName"], "lastName": row["Surname"], "emailAddress": row["Email"], "userName": row["BookedUsername"],
+    "timezone": "America/Vancouver", "customAttributes": [{"attributeId": "10", "attributeValue": int(row["UID"])}], "groups": [int(row["GroupId"])]}
 
     update_info_str = json.dumps(update_info)
     update_user_url = "http://YOUR_BOOKED_DOMAIN/Web/Services/index.php/Users/%i" % row["BookedID"]
-    requests.post(update_user_url, data=update_info_str, headers=headers)
+    requests.post(update_user_url, data=update_info_str, headers=auth_headers)
 
-    erase_flag = text("UPDATE YOUR_USER_TABLE_NAME SET Modified = 0 WHERE id = :v1") # Since Booked has been updated, we erase the flag from the table
+    erase_flag = text("UPDATE mechStudents SET Modified = 0 WHERE id = :v1") # Since "Booked" has been updated, we erase the flag from the table
     engine.execute(erase_flag, v1=int(row["id"]))
 
-# In the following block of code, if a user was deleted in the "mechStudents" table, it also deletes the user from Booked.
-# When the user is deleted, we have configured MySQL to move this user into a new table called "deleted". This scripts checks if there are
-# students in the "deleted" table and makes a "DELETE" API call to Booked to remove the user from there as well.
+# In the following block of code, if a student was deleted in the "mechStudents" table, it also deletes the user from "Booked".
+# When the student is deleted, we have configured MySQL to move this user into a new table called "deleted". This scripts checks if there are
+# students in the "deleted" table and makes a "DELETE" API call to "Booked" to remove the user from there as well.
 deleted_rows = engine.execute("SELECT id, GivenName, Surname, BookedID FROM deleted").fetchall()
 deleted_table = pd.DataFrame(deleted_rows, columns=["id", "GivenName", "Surname", "BookedID"])
 
@@ -62,7 +59,7 @@ for ii in deleted_table.index:
     row = deleted_table.iloc[ii]
 
     delete_url = "http://YOUR_BOOKED_DOMAIN/Web/Services/index.php/Users/%i" % row["BookedID"]
-    requests.delete(delete_url, headers=headers)
+    requests.delete(delete_url, headers=auth_headers)
 
     erase_user = text("DELETE FROM deleted WHERE id = :w1")   # We delete the user from the "deleted" table
     engine.execute(erase_user, w1=int(row["id"]))
