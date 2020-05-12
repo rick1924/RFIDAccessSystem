@@ -1,0 +1,16 @@
+{
+	"name": "spiblock",
+	"text": "Enable SPI-Py",
+	"script": "configurespi.py",
+	"args": [],
+	"network": false,
+	"continue": true,
+	"type": "other",
+	"category":"other",
+	"supportedOperatingSystems": [
+		"raspbian-pibakery.img",
+		"raspbian-lite-pibakery.img"
+	],
+	"shortDescription":"Runs the file setup.py that finishes the SPI-Py configuration",
+	"longDescription":"Runs the file setup.py that finishes the SPI-Py configuration"
+}

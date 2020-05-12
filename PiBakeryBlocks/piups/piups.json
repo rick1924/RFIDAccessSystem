@@ -1,0 +1,16 @@
+{
+	"name": "piups",
+	"text": "Configure the UPS HAT",
+	"script": "EnableHat.py",
+	"args": [],
+	"network": false,
+	"continue": true,
+	"type": "other",
+	"category":"other",
+	"supportedOperatingSystems": [
+		"raspbian-pibakery.img",
+		"raspbian-lite-pibakery.img"
+	],
+	"shortDescription":"Download libraries and configure the UPS HAT.",
+	"longDescription":"Download libraries and configure the UPS HAT."
+}
