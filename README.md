@@ -56,7 +56,7 @@ To control access to the resources, we use a relay which will turn on the resour
 | GND |  Any ground |
 | IN | 15 |
 
-For a diagram of the connections click [here](DiagramRelay.png).
+For a diagram of the connections click [here](CircuitDiagram.png).
 
 ### User SQL Table
 The project administrator will require a computer or a cloud server that has to be constantly running, where all the information about the users will be stored. It must be constantly running since we will be accessing the user information stored in the database through the Raspberry Pis attached to each resource. The least processes we have running in this computer, the more efficient the project will be, therefore we recommend using a cloud server fully dedicated to the project.
@@ -92,7 +92,8 @@ For every file in the following list, the reader should input their correspondin
 This code and figures are licensed under the GNU Lesser General Public License 3.0 - see the [LICENSE.md](LICENSE.md) file for details.
 
 ## Acknowledgments
-* The University of British Columbia
+* The University of British Columbia, Department of Mechanical Engineering
 * Bernhard Nimmervoll
+* Markus Fengler
 * Nick Korbel
 * Mario Gomez
